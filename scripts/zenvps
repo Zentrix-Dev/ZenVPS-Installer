@@ -1,0 +1,267 @@
+#!/usr/bin/env bash
+# zenvps — CLI management wrapper around the systemd service.
+#
+# Usage:
+#   zenvps {start|stop|restart|status|logs|update|uninstall|backup|restore|health|wizard|shell}
+#
+# This script must be runnable as root (for systemctl) and as the zenvps
+# user (for backup/restore, logs).
+
+set -Eeuo pipefail
+
+SERVICE_NAME="zenvps"
+INSTALL_DIR="/opt/zenvps"
+CONFIG_DIR="/etc/zenvps"
+DATA_DIR="/var/lib/zenvps"
+LOG_DIR="/var/log/zenvps"
+BACKUP_DIR="${DATA_DIR}/backups"
+INSTALLER_DIR="${INSTALL_DIR}/installer"
+
+# Colors
+if [[ -t 1 ]]; then
+  readonly RESET=$'\033[0m' RED=$'\033[31m' GREEN=$'\033[32m' YELLOW=$'\033[33m' BLUE=$'\033[34m' CYAN=$'\033[36m'
+else
+  readonly RESET="" RED="" GREEN="" YELLOW="" BLUE="" CYAN=""
+fi
+
+info()    { echo "${BLUE}ℹ${RESET}  $*" >&2; }
+success() { echo "${GREEN}✓${RESET} $*" >&2; }
+warn()    { echo "${YELLOW}⚠${RESET} $*" >&2; }
+err()     { echo "${RED}✗${RESET} $*" >&2; }
+
+usage() {
+  cat <<EOF
+${CYAN}zenvps${RESET} — CLI management tool
+
+${BOLD}Usage:${RESET} zenvps <command> [args]
+
+${BOLD}Commands:${RESET}
+  start         Start the bot service
+  stop          Stop the bot service
+  restart       Restart the bot service
+  status        Show service status
+  logs [N]      Show last N log lines (default 50, follow with -f)
+  health        Run health checks
+  update        Update to the latest version
+  uninstall     Uninstall the bot (preserves data + backups)
+  backup        Create a database backup
+  restore <f>   Restore from a backup file
+  list-backups  List available backups
+  wizard        Re-run the setup wizard
+  shell         Drop into a shell as the zenvps user (debug)
+  version       Show installed version
+  watchdog-check  Internal: run by the watchdog timer
+
+${BOLD}Examples:${RESET}
+  zenvps status
+  zenvps logs -f
+  zenvps backup
+  zenvps restore zenvps-backup-20260713-100000.json.gz
+EOF
+}
+
+require_root() {
+  if [[ $EUID -ne 0 ]]; then
+    err "This command requires root. Use sudo."
+    exit 1
+  fi
+}
+
+cmd_start()    { require_root; systemctl start "${SERVICE_NAME}"; success "Started ${SERVICE_NAME}"; }
+cmd_stop()     { require_root; systemctl stop "${SERVICE_NAME}"; success "Stopped ${SERVICE_NAME}"; }
+cmd_restart()  { require_root; systemctl restart "${SERVICE_NAME}"; success "Restarted ${SERVICE_NAME}"; }
+
+cmd_status() {
+  systemctl status "${SERVICE_NAME}" --no-pager || true
+  echo
+  info "Recent log lines:"
+  journalctl -u "${SERVICE_NAME}" -n 10 --no-pager 2>/dev/null || true
+}
+
+cmd_logs() {
+  local n="${1:-50}"
+  if [[ "$n" == "-f" ]]; then
+    journalctl -u "${SERVICE_NAME}" -f
+  else
+    journalctl -u "${SERVICE_NAME}" -n "${n}" --no-pager
+  fi
+}
+
+cmd_health() {
+  info "Running health checks…"
+  if systemctl is-active --quiet "${SERVICE_NAME}"; then
+    success "Service is running"
+  else
+    err "Service is stopped"
+  fi
+  if docker info &>/dev/null; then
+    success "Docker is reachable"
+  else
+    err "Docker is not reachable"
+  fi
+  if [[ -f "${CONFIG_DIR}/env" ]]; then
+    if grep -q "^DISCORD_TOKEN=$" "${CONFIG_DIR}/env"; then
+      err "DISCORD_TOKEN is empty"
+    else
+      success "DISCORD_TOKEN is set"
+    fi
+  else
+    err "Config file missing: ${CONFIG_DIR}/env"
+  fi
+  local count
+  count="$(docker ps -q --filter 'label=zenvps.managed=true' 2>/dev/null | wc -l)"
+  info "Managed VPS containers: ${count}"
+}
+
+cmd_backup() {
+  require_root
+  local ts
+  ts="$(date -u +%Y%m%d-%H%M%S)"
+  local out="${BACKUP_DIR}/zenvps-backup-${ts}.json.gz"
+  mkdir -p "${BACKUP_DIR}"
+  if [[ -f "${DATA_DIR}/zenvps.json" ]]; then
+    gzip -c "${DATA_DIR}/zenvps.json" > "${out}"
+    chmod 0600 "${out}"
+    success "Backup written to ${out}"
+  else
+    err "Database file not found: ${DATA_DIR}/zenvps.json"
+    exit 1
+  fi
+  # Prune old backups
+  local backups
+  backups=("${BACKUP_DIR}"/zenvps-backup-*.json.gz)
+  if [[ ${#backups[@]} -gt 14 ]]; then
+    ls -1t "${BACKUP_DIR}"/zenvps-backup-*.json.gz | tail -n +15 | xargs -r rm -f
+    info "Pruned old backups (kept newest 14)"
+  fi
+}
+
+cmd_restore() {
+  require_root
+  local file="${1:-}"
+  if [[ -z "${file}" ]]; then
+    err "Usage: zenvps restore <backup-file>"
+    exit 1
+  fi
+  if [[ ! -f "${file}" ]]; then
+    # Try relative to backup dir
+    file="${BACKUP_DIR}/${file}"
+  fi
+  if [[ ! -f "${file}" ]]; then
+    err "Backup file not found: ${1}"
+    exit 1
+  fi
+  warn "This will OVERWRITE the current database. Continue? [y/N]"
+  read -r reply
+  [[ "${reply}" =~ ^[Yy]$ ]] || { info "Cancelled"; exit 0; }
+  systemctl stop "${SERVICE_NAME}"
+  cp "${DATA_DIR}/zenvps.json" "${DATA_DIR}/zenvps.json.pre-restore.$(date +%s)"
+  gunzip -c "${file}" > "${DATA_DIR}/zenvps.json"
+  chown zenvps:zenvps "${DATA_DIR}/zenvps.json"
+  chmod 0600 "${DATA_DIR}/zenvps.json"
+  systemctl start "${SERVICE_NAME}"
+  success "Restored from ${file}"
+}
+
+cmd_list_backups() {
+  if [[ ! -d "${BACKUP_DIR}" ]]; then
+    info "No backups yet."
+    return
+  fi
+  ls -1t "${BACKUP_DIR}"/zenvps-backup-*.json.gz 2>/dev/null | head -20 | while read -r f; do
+    local size
+    size="$(du -h "${f}" | cut -f1)"
+    echo "  $(basename "${f}")  (${size})"
+  done
+}
+
+cmd_update() {
+  require_root
+  if [[ -d "${INSTALLER_DIR}" ]]; then
+    bash "${INSTALLER_DIR}/install.sh" update
+  else
+    err "Installer not found at ${INSTALLER_DIR}. Re-run the original installer."
+    exit 1
+  fi
+}
+
+cmd_uninstall() {
+  require_root
+  if [[ -d "${INSTALLER_DIR}" ]]; then
+    bash "${INSTALLER_DIR}/install.sh" uninstall
+  else
+    err "Installer not found at ${INSTALLER_DIR}. Re-run the original installer."
+    exit 1
+  fi
+}
+
+cmd_wizard() {
+  require_root
+  if [[ -d "${INSTALLER_DIR}" ]]; then
+    bash "${INSTALLER_DIR}/install.sh" wizard
+  else
+    err "Installer not found at ${INSTALLER_DIR}."
+    exit 1
+  fi
+}
+
+cmd_shell() {
+  require_root
+  info "Dropping into shell as ${SERVICE_NAME} user. Type 'exit' to return."
+  sudo -iu "${SERVICE_NAME}"
+}
+
+cmd_version() {
+  if [[ -f "${INSTALL_DIR}/VERSION" ]]; then
+    cat "${INSTALL_DIR}/VERSION"
+  elif [[ -f "${INSTALL_DIR}/package.json" ]]; then
+    grep -m1 '"version"' "${INSTALL_DIR}/package.json" | sed -E 's/.*"version":\s*"([^"]+)".*/\1/'
+  else
+    echo "unknown"
+  fi
+}
+
+cmd_watchdog_check() {
+  # Called by the systemd timer every minute.
+  # If the bot has been failing for 3 consecutive checks, restart it.
+  local marker="${DATA_DIR}/watchdog.fail"
+  local state_file="${DATA_DIR}/watchdog.state"
+  local failures=0
+  [[ -f "${state_file}" ]] && failures="$(cat "${state_file}" 2>/dev/null || echo 0)"
+
+  if systemctl is-active --quiet "${SERVICE_NAME}"; then
+    echo 0 > "${state_file}"
+    rm -f "${marker}"
+    exit 0
+  fi
+
+  failures=$((failures + 1))
+  echo "${failures}" > "${state_file}"
+  if [[ ${failures} -ge 3 ]]; then
+    err "Watchdog: ${SERVICE_NAME} has been down for ${failures} checks — restarting"
+    systemctl restart "${SERVICE_NAME}"
+    echo 0 > "${state_file}"
+    touch "${marker}"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 1
+fi
+
+# BOLD not defined in colors above; add it
+readonly BOLD=$'\033[1m'
+
+cmd="$1"; shift || true
+case "${cmd}" in
+  start|stop|restart|status|logs|health|backup|restore|list-backups|update|uninstall|wizard|shell|version|watchdog-check)
+    "cmd_${cmd//-/_}" "$@"
+    ;;
+  -h|--help|help) usage ;;
+  *) err "Unknown command: ${cmd}"; usage; exit 1 ;;
+esac

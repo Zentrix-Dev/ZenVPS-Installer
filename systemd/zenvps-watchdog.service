@@ -1,0 +1,8 @@
+[Unit]
+Description=ZenVPS watchdog (restarts bot if health check fails)
+After=zenvps.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/zenvps watchdog-check
+User=root

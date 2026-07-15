@@ -1,0 +1,18 @@
+[Unit]
+Description=ZenVPS external anti-abuse monitor (kills miners / fork bombs)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/var/lib/zenvps/anti-abuse.sh
+Restart=always
+RestartSec=5s
+User=root
+# Anti-abuse needs to inspect and kill processes
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/log/zenvps
+
+[Install]
+WantedBy=multi-user.target

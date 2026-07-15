@@ -1,0 +1,47 @@
+[Unit]
+Description=ZenVPS Discord bot
+Documentation=https://github.com/your-org/zenvps
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+
+[Service]
+Type=simple
+User=zenvps
+Group=zenvps
+WorkingDirectory=/opt/zenvps
+EnvironmentFile=/etc/zenvps/env
+ExecStart=/opt/zenvps/run.sh
+Restart=on-failure
+RestartSec=5s
+# Aggressive restart on crash
+StartLimitInterval=60s
+StartLimitBurst=5
+# Watchdog — bot must call sd_notify every 60s (the watchdog.py module handles this)
+# WatchdogSec=90
+# Resource limits
+MemoryMax=512M
+CPUQuota=200%
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/zenvps /var/log/zenvps
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+CapabilityBoundingSet=
+AmbientCapabilities=
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=zenvps
+
+[Install]
+WantedBy=multi-user.target
