@@ -52,6 +52,13 @@ The installer refuses to run on any other OS (CentOS, Fedora, Alpine, Arch, etc.
 
 The installer is self-sufficient — it `git clone`s the bot source from GitHub for you. You only need the installer ZIP.
 
+
+## One Click Installation
+```
+apt update -y && apt upgrade -y && apt install git -y && git clone https://github.com/Zentrix-Dev/ZenVPS-Installer.git && sudo bash ZenVPS-Installer/install.sh install
+```
+
+## Manual Installation
 ```bash
 # 1. Extract just the installer
 unzip ZenVPS-Installer-v1.0.0.zip
