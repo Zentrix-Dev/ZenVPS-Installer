@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZenVPS — Installation &amp; Wiki</title>
+<meta name="description" content="Installation guide and reference wiki for ZenVPS, a hardened Docker-based VPS manager for Discord.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0c1017;
+    --bg-panel:#11161f;
+    --bg-panel-2:#151b26;
+    --bg-raised:#1a2130;
+    --border:#242c3c;
+    --border-soft:#1c2330;
+    --ink:#e7ebf3;
+    --ink-dim:#8a93a8;
+    --ink-faint:#565f74;
+    --amber:#f2a54a;
+    --amber-dim:#8a642f;
+    --teal:#49c9b0;
+    --red:#e5573f;
+    --violet:#8f8fe8;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --grotesk:'Space Grotesk', sans-serif;
+    --sans:'Inter', sans-serif;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+  body{
+    margin:0;
+    background:var(--bg-deep);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--amber); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  code, pre, .mono{font-family:var(--mono);}
+  code{
+    background:var(--bg-raised);
+    border:1px solid var(--border);
+    padding:0.1em 0.45em;
+    border-radius:4px;
+    font-size:0.86em;
+    color:#ffd8ab;
+  }
+  pre{
+    background:#0a0d13;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    overflow-x:auto;
+    font-size:0.84em;
+    line-height:1.6;
+    position:relative;
+    margin:14px 0 22px;
+  }
+  pre code{
+    background:none; border:none; padding:0; color:#d7dce6; font-size:1em;
+  }
+  .tok-flag{color:var(--teal);}
+  .tok-str{color:#f2c185;}
+  .tok-cmt{color:var(--ink-faint);}
+  .tok-var{color:var(--violet);}
+
+  ::selection{background:var(--amber); color:#1a1206;}
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg-deep);}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--ink-faint);}
+
+  /* ---------- layout shell ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns:272px 1fr;
+    max-width:1440px;
+    margin:0 auto;
+  }
+  @media (max-width:980px){
+    .shell{grid-template-columns:1fr;}
+  }
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+    border-right:1px solid var(--border-soft);
+    padding:22px 18px 40px;
+    background:var(--bg-panel);
+  }
+  @media (max-width:980px){
+    .sidebar{position:relative; height:auto; border-right:none; border-bottom:1px solid var(--border-soft);}
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:6px;
+  }
+  .brand-mark{
+    width:30px; height:30px; border-radius:7px;
+    background:linear-gradient(150deg, var(--amber), #c97a2a);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--grotesk); font-weight:700; color:#191008; font-size:14px;
+    flex:none;
+  }
+  .brand-name{font-family:var(--grotesk); font-weight:700; font-size:17px; letter-spacing:-0.01em;}
+  .brand-sub{font-size:11px; color:var(--ink-faint); font-family:var(--mono); margin:0 0 20px 40px;}
+
+  .navsearch{
+    width:100%;
+    background:var(--bg-raised);
+    border:1px solid var(--border);
+    color:var(--ink);
+    border-radius:var(--radius);
+    padding:8px 10px;
+    font-size:12.5px;
+    font-family:var(--mono);
+    margin-bottom:18px;
+  }
+  .navsearch:focus{outline:none; border-color:var(--amber-dim);}
+  .navsearch::placeholder{color:var(--ink-faint);}
+
+  .navgroup{margin-bottom:4px;}
+  .navgroup-title{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:0.09em;
+    color:var(--ink-faint); font-weight:600; margin:18px 0 6px 4px;
+  }
+  .navlink{
+    display:block;
+    padding:6px 10px;
+    border-radius:5px;
+    font-size:13px;
+    color:var(--ink-dim);
+    border-left:2px solid transparent;
+    transition:background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .navlink:hover{background:var(--bg-raised); color:var(--ink); text-decoration:none;}
+  .navlink.active{color:var(--amber); border-left-color:var(--amber); background:rgba(242,165,74,0.07); font-weight:500;}
+
+  /* ---------- main content ---------- */
+  main{padding:0; min-width:0;}
+  .hero{
+    padding:64px 56px 48px;
+    border-bottom:1px solid var(--border-soft);
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse 900px 420px at 78% -10%, rgba(242,165,74,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 400px at 10% 110%, rgba(73,201,176,0.06), transparent 60%);
+  }
+  @media (max-width:700px){ .hero{padding:44px 22px 34px;} }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:var(--mono); font-size:11.5px; color:var(--teal);
+    background:rgba(73,201,176,0.09); border:1px solid rgba(73,201,176,0.25);
+    padding:4px 10px; border-radius:20px; margin-bottom:22px;
+  }
+  .eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--teal); box-shadow:0 0 8px var(--teal);}
+  h1.title{
+    font-family:var(--grotesk); font-weight:700; font-size:clamp(34px,5vw,54px);
+    line-height:1.04; letter-spacing:-0.02em; margin:0 0 16px;
+    max-width:14ch;
+  }
+  h1.title .accent{color:var(--amber);}
+  .tagline{
+    font-size:17px; color:var(--ink-dim); max-width:56ch; margin:0 0 30px;
+  }
+  .hero-actions{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:36px;}
+  .btn{
+    font-family:var(--mono); font-size:13px; font-weight:500;
+    padding:10px 16px; border-radius:6px; border:1px solid var(--border);
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+    transition:transform 0.1s, border-color 0.15s, background 0.15s;
+  }
+  .btn:hover{text-decoration:none; transform:translateY(-1px);}
+  .btn-primary{background:var(--amber); color:#1a1206; border-color:var(--amber); font-weight:600;}
+  .btn-primary:hover{background:#f6b568;}
+  .btn-ghost{background:var(--bg-raised); color:var(--ink);}
+  .btn-ghost:hover{border-color:var(--ink-faint);}
+
+  .badges{display:flex; gap:8px; flex-wrap:wrap;}
+  .badge{
+    font-family:var(--mono); font-size:11px; color:var(--ink-dim);
+    background:var(--bg-raised); border:1px solid var(--border);
+    padding:4px 9px; border-radius:4px;
+  }
+
+  /* status console — signature element */
+  .console{
+    margin-top:34px;
+    background:#090c11;
+    border:1px solid var(--border);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .console-bar{
+    display:flex; align-items:center; gap:8px;
+    padding:9px 14px; border-bottom:1px solid var(--border-soft);
+    background:var(--bg-panel-2);
+  }
+  .console-dot{width:9px; height:9px; border-radius:50%;}
+  .console-title{font-family:var(--mono); font-size:11.5px; color:var(--ink-faint); margin-left:4px;}
+  .console-body{padding:16px 18px; font-family:var(--mono); font-size:12.5px;}
+  .console-row{display:flex; justify-content:space-between; gap:16px; padding:5px 0; border-bottom:1px dashed var(--border-soft);}
+  .console-row:last-child{border-bottom:none;}
+  .console-unit{color:var(--ink-dim);}
+  .console-state{display:inline-flex; align-items:center; gap:6px;}
+  .state-dot{width:7px; height:7px; border-radius:50%;}
+  .state-active .state-dot{background:var(--teal); box-shadow:0 0 6px var(--teal);}
+  .state-active{color:var(--teal);}
+  .state-guard .state-dot{background:var(--amber); box-shadow:0 0 6px var(--amber);}
+  .state-guard{color:var(--amber);}
+
+  section{padding:52px 56px; border-bottom:1px solid var(--border-soft); scroll-margin-top:18px;}
+  @media (max-width:700px){ section{padding:40px 22px;} }
+  section:last-of-type{border-bottom:none;}
+  .section-eyebrow{
+    font-family:var(--mono); font-size:11.5px; color:var(--ink-faint);
+    text-transform:uppercase; letter-spacing:0.09em; margin-bottom:10px;
+  }
+  h2{
+    font-family:var(--grotesk); font-size:28px; font-weight:600; letter-spacing:-0.01em;
+    margin:0 0 14px;
+  }
+  h3{
+    font-family:var(--grotesk); font-size:18px; font-weight:600; margin:32px 0 10px;
+    color:var(--ink);
+  }
+  h3:first-of-type{margin-top:6px;}
+  p{color:var(--ink-dim); margin:0 0 14px; max-width:74ch;}
+  p.lead{font-size:15.5px; color:var(--ink); max-width:70ch;}
+  ul, ol{color:var(--ink-dim); max-width:72ch; padding-left:22px;}
+  li{margin-bottom:6px;}
+  strong{color:var(--ink); font-weight:600;}
+
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:22px 0;}
+  @media (max-width:760px){ .grid-2{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--bg-panel); border:1px solid var(--border-soft);
+    border-radius:8px; padding:20px 22px;
+  }
+  .card h4{
+    font-family:var(--mono); font-size:13px; color:var(--amber); margin:0 0 10px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .card ul{margin:0; padding-left:18px; font-size:13.5px;}
+  .card p{font-size:13.5px; margin-bottom:8px;}
+
+  /* copy button on code blocks */
+  .code-wrap{position:relative;}
+  .copy-btn{
+    position:absolute; top:8px; right:8px;
+    font-family:var(--mono); font-size:10.5px; color:var(--ink-faint);
+    background:var(--bg-panel-2); border:1px solid var(--border);
+    padding:4px 8px; border-radius:4px; cursor:pointer;
+    opacity:0; transition:opacity 0.15s;
+  }
+  .code-wrap:hover .copy-btn{opacity:1;}
+  .copy-btn:hover{color:var(--ink); border-color:var(--ink-faint);}
+  .copy-btn.copied{color:var(--teal); border-color:var(--teal);}
+
+  /* tables */
+  .table-wrap{overflow-x:auto; margin:18px 0 26px; border:1px solid var(--border-soft); border-radius:8px;}
+  table{border-collapse:collapse; width:100%; font-size:13.5px;}
+  thead th{
+    text-align:left; font-family:var(--mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--ink-faint); background:var(--bg-panel-2);
+    padding:10px 16px; border-bottom:1px solid var(--border);
+  }
+  tbody td{padding:10px 16px; border-bottom:1px solid var(--border-soft); color:var(--ink-dim); vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:rgba(255,255,255,0.015);}
+  td code, tbody td code{white-space:nowrap;}
+
+  /* numbered sequence — used only for the real ordered install steps */
+  .steps{list-style:none; padding:0; margin:26px 0 0; counter-reset:step;}
+  .step{
+    display:grid; grid-template-columns:44px 1fr; gap:18px;
+    padding:18px 0; border-top:1px solid var(--border-soft);
+  }
+  .step:first-child{border-top:none;}
+  .step-num{
+    counter-increment:step;
+    font-family:var(--mono); font-size:13px; color:var(--amber);
+    display:flex; align-items:flex-start; justify-content:center; padding-top:2px;
+  }
+  .step-num::before{content: counter(step, decimal-leading-zero);}
+  .step h4{margin:0 0 6px; font-family:var(--grotesk); font-size:15.5px; font-weight:600; color:var(--ink);}
+  .step p{font-size:13.5px; margin:0;}
+
+  /* pill / badge chips for permission levels etc */
+  .chip{
+    display:inline-block; font-family:var(--mono); font-size:10.5px;
+    padding:2px 8px; border-radius:20px; border:1px solid;
+  }
+  .chip-owner{color:var(--red); border-color:rgba(229,87,63,0.4); background:rgba(229,87,63,0.08);}
+  .chip-admin{color:var(--amber); border-color:rgba(242,165,74,0.4); background:rgba(242,165,74,0.08);}
+  .chip-user{color:var(--teal); border-color:rgba(73,201,176,0.4); background:rgba(73,201,176,0.08);}
+
+  /* layers list for anti-abuse */
+  .layers{list-style:none; padding:0; margin:20px 0 0; display:grid; gap:12px;}
+  .layer{
+    display:grid; grid-template-columns:34px 1fr; gap:14px;
+    background:var(--bg-panel); border:1px solid var(--border-soft); border-radius:8px; padding:14px 16px;
+  }
+  .layer-n{font-family:var(--mono); color:var(--amber); font-size:13px;}
+  .layer h4{margin:0 0 4px; font-size:14px; font-family:var(--grotesk); color:var(--ink);}
+  .layer p{margin:0; font-size:13px;}
+
+  /* accordion for troubleshooting */
+  .acc-item{border:1px solid var(--border-soft); border-radius:8px; margin-bottom:10px; background:var(--bg-panel); overflow:hidden;}
+  .acc-trigger{
+    width:100%; text-align:left; background:none; border:none; color:var(--ink);
+    font-family:var(--grotesk); font-size:14.5px; font-weight:600;
+    padding:15px 18px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+    gap:10px;
+  }
+  .acc-trigger:hover{background:var(--bg-raised);}
+  .acc-trigger .chevron{transition:transform 0.18s; color:var(--ink-faint); flex:none;}
+  .acc-item.open .chevron{transform:rotate(90deg); color:var(--amber);}
+  .acc-panel{max-height:0; overflow:hidden; transition:max-height 0.22s ease;}
+  .acc-panel-inner{padding:0 18px 18px;}
+  .acc-panel-inner p{font-size:13.5px; margin:0 0 10px;}
+  .acc-panel-inner ul{font-size:13.5px; margin:0 0 10px;}
+
+  /* diagram block */
+  .diagram{
+    font-family:var(--mono); font-size:12px; line-height:1.7; color:var(--ink-dim);
+    background:#0a0d13; border:1px solid var(--border); border-radius:8px;
+    padding:22px; overflow-x:auto; white-space:pre; margin:20px 0 26px;
+  }
+  .diagram .node{color:var(--ink);}
+  .diagram .flow{color:var(--amber);}
+
+  .callout{
+    display:flex; gap:12px; align-items:flex-start;
+    background:rgba(229,87,63,0.06); border:1px solid rgba(229,87,63,0.28);
+    border-radius:8px; padding:14px 16px; margin:20px 0;
+  }
+  .callout.warn{background:rgba(242,165,74,0.06); border-color:rgba(242,165,74,0.28);}
+  .callout.info{background:rgba(73,201,176,0.06); border-color:rgba(73,201,176,0.28);}
+  .callout-icon{font-family:var(--mono); font-size:15px; flex:none; margin-top:1px;}
+  .callout.danger .callout-icon{color:var(--red);}
+  .callout.warn .callout-icon{color:var(--amber);}
+  .callout.info .callout-icon{color:var(--teal);}
+  .callout p{margin:0; font-size:13.5px; color:var(--ink-dim);}
+  .callout strong{color:var(--ink);}
+
+  footer{
+    padding:44px 56px 60px; text-align:center;
+  }
+  @media (max-width:700px){ footer{padding:36px 22px 50px;} }
+  footer .brand{justify-content:center; margin-bottom:14px;}
+  footer p{color:var(--ink-faint); font-size:12.5px; margin:0 auto; max-width:60ch;}
+  footer .credit-links{margin-top:16px; display:flex; gap:18px; justify-content:center; font-family:var(--mono); font-size:12px;}
+
+  .anchor-offset{scroll-margin-top:14px;}
+
+  /* animations */
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .hero > *{animation:fadeUp 0.6s ease both;}
+  .hero .eyebrow{animation-delay:0.02s;}
+  .hero h1{animation-delay:0.07s;}
+  .hero .tagline{animation-delay:0.12s;}
+  .hero .hero-actions{animation-delay:0.17s;}
+  .hero .badges{animation-delay:0.2s;}
+  .hero .console{animation-delay:0.25s;}
+
+  a.skip-link{position:absolute; left:-999px; top:0; background:var(--amber); color:#1a1206; padding:10px; z-index:100;}
+  a.skip-link:focus{left:10px; top:10px;}
+
+  :focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<div class="shell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <nav class="sidebar" aria-label="Wiki navigation">
+    <div class="brand">
+      <div class="brand-mark">Z</div>
+      <div class="brand-name">ZenVPS</div>
+    </div>
+    <p class="brand-sub">by ZentrixDev</p>
+
+    <input class="navsearch" id="navSearch" type="text" placeholder="Filter pages…" aria-label="Filter navigation">
+
+    <div id="navRoot">
+      <div class="navgroup">
+        <div class="navgroup-title">Start here</div>
+        <a class="navlink" href="#overview">Overview</a>
+        <a class="navlink" href="#packages">Package layout</a>
+        <a class="navlink" href="#prerequisites">Prerequisites</a>
+      </div>
+      <div class="navgroup">
+        <div class="navgroup-title">Installation</div>
+        <a class="navlink" href="#quickstart">One-click install</a>
+        <a class="navlink" href="#manual">Manual install</a>
+        <a class="navlink" href="#source">Where the source comes from</a>
+        <a class="navlink" href="#steps">What the installer does</a>
+      </div>
+      <div class="navgroup">
+        <div class="navgroup-title">Operating it</div>
+        <a class="navlink" href="#commands">Installer commands</a>
+        <a class="navlink" href="#cli">CLI reference</a>
+        <a class="navlink" href="#files">File locations</a>
+        <a class="navlink" href="#config">Configuration</a>
+      </div>
+      <div class="navgroup">
+        <div class="navgroup-title">Using the bot</div>
+        <a class="navlink" href="#architecture">Architecture</a>
+        <a class="navlink" href="#commands-ref">Slash commands</a>
+        <a class="navlink" href="#database">Database schema</a>
+      </div>
+      <div class="navgroup">
+        <div class="navgroup-title">Security</div>
+        <a class="navlink" href="#security">Security model</a>
+        <a class="navlink" href="#antiabuse">Anti-abuse layers</a>
+      </div>
+      <div class="navgroup">
+        <div class="navgroup-title">Help</div>
+        <a class="navlink" href="#troubleshooting">Troubleshooting</a>
+        <a class="navlink" href="#uninstall">Uninstall</a>
+        <a class="navlink" href="#credits">Credits &amp; license</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <main id="main-content">
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="eyebrow"><span class="dot"></span> systemd hardened · docker isolated · owner-only tokens</div>
+      <h1 class="title">Run your own VPS<br>fleet from <span class="accent">Discord</span>.</h1>
+      <p class="tagline">ZenVPS is a hardened, modular Python bot that spins up Docker-based Ubuntu and Debian containers on command — deploy, manage, and SSH into VPS instances without leaving your server.</p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#quickstart">Install in one line →</a>
+        <a class="btn btn-ghost" href="https://github.com/ZentrixDev" target="_blank" rel="noopener">★ Star on GitHub</a>
+        <a class="btn btn-ghost" href="#commands-ref">Browse commands</a>
+      </div>
+
+      <div class="badges">
+        <span class="badge">MIT licensed</span>
+        <span class="badge">Ubuntu 20.04 / 22.04 / 24.04 LTS</span>
+        <span class="badge">Debian 11 / 12</span>
+        <span class="badge">Python 3</span>
+        <span class="badge">discord.py</span>
+      </div>
+
+      <div class="console" aria-label="Example service status after install">
+        <div class="console-bar">
+          <span class="console-dot" style="background:#e5573f"></span>
+          <span class="console-dot" style="background:#f2a54a"></span>
+          <span class="console-dot" style="background:#49c9b0"></span>
+          <span class="console-title">sudo zenvps status</span>
+        </div>
+        <div class="console-body">
+          <div class="console-row"><span class="console-unit">zenvps.service</span><span class="console-state state-active"><span class="state-dot"></span>active (running)</span></div>
+          <div class="console-row"><span class="console-unit">zenvps-watchdog.timer</span><span class="console-state state-active"><span class="state-dot"></span>armed · probes every 60s</span></div>
+          <div class="console-row"><span class="console-unit">zenvps-anti-abuse.service</span><span class="console-state state-guard"><span class="state-dot"></span>scanning · 0 strikes</span></div>
+          <div class="console-row"><span class="console-unit">docker.sock</span><span class="console-state state-active"><span class="state-dot"></span>reachable</span></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- OVERVIEW -->
+    <section id="overview" class="anchor-offset">
+      <div class="section-eyebrow">01 · Overview</div>
+      <h2>Two packages, one bot</h2>
+      <p class="lead">ZenVPS ships as two separate downloads. The <strong>installer</strong> sets up the host — dependencies, Docker images, systemd services, and the setup wizard. The <strong>files</strong> package is the actual bot source that the installer clones or copies into place. Most people never touch the files package directly; the installer handles it automatically.</p>
+    </section>
+
+    <!-- PACKAGE LAYOUT -->
+    <section id="packages" class="anchor-offset">
+      <div class="section-eyebrow">02 · Structure</div>
+      <h2>Package layout</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h4>📦 ZenVPS-Installer/</h4>
+          <ul>
+            <li><code>install.sh</code> — main entry point</li>
+            <li><code>lib/helpers.sh</code> — deps, Docker, service, wizard logic</li>
+            <li><code>systemd/</code> — unit files for service, watchdog, anti-abuse</li>
+            <li><code>logrotate/zenvps</code> — daily rotation, 14-day retention</li>
+            <li><code>scripts/</code> — the <code>zenvps</code> CLI, miner killer, egress filter</li>
+            <li><code>docker/</code> — hardened Ubuntu &amp; Debian VPS Dockerfiles</li>
+            <li><code>docs/</code> — INSTALL, CONFIG, SECURITY, PERFORMANCE, ARCHITECTURE, BUGS_FIXED</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>📦 ZenVPS-Files/ (python/)</h4>
+          <ul>
+            <li><code>src/zenvps/bot.py</code> — wires the bot together</li>
+            <li><code>src/zenvps/cogs/</code> — slash commands (user, admin, remote, meta)</li>
+            <li><code>src/zenvps/remote/</code> — tmate, sshx, serveo, host-SSH backends</li>
+            <li><code>src/zenvps/security.py</code>, <code>permissions.py</code> — validation &amp; RBAC</li>
+            <li><code>src/zenvps/database.py</code> — JSON-on-disk with file locking</li>
+            <li><code>.env.example</code> — fully-commented config template</li>
+            <li><code>tests/</code> — pytest suite (48 tests)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREREQUISITES -->
+    <section id="prerequisites" class="anchor-offset">
+      <div class="section-eyebrow">03 · Before you start</div>
+      <h2>Prerequisites</h2>
+      <ul>
+        <li>A Linux host running <strong>Ubuntu 20.04 / 22.04 / 24.04 LTS</strong> or <strong>Debian 11 / 12</strong> — the installer refuses to run on anything else (CentOS, Fedora, Alpine, Arch, etc.)</li>
+        <li>Root access — the installer uses <code>sudo</code></li>
+        <li>Internet access — by default it <code>git clone</code>s the bot source from GitHub</li>
+        <li>A Discord bot token from the <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a></li>
+        <li>Your Discord user ID (right-click yourself in Discord → Copy ID)</li>
+      </ul>
+    </section>
+
+    <!-- QUICK START -->
+    <section id="quickstart" class="anchor-offset">
+      <div class="section-eyebrow">04 · Installation</div>
+      <h2>One-click install</h2>
+      <p class="lead">The installer is self-sufficient — run this single line as root on a fresh Ubuntu or Debian host and it takes care of everything, ending with the interactive setup wizard.</p>
+      <div class="code-wrap">
+        <pre><code>apt update -y &amp;&amp; apt upgrade -y &amp;&amp; apt install git -y &amp;&amp; git clone https://github.com/Zentrix-Dev/ZenVPS-Installer.git &amp;&amp; sudo bash ZenVPS-Installer/install.sh install</code></pre>
+        <button class="copy-btn" data-copy-target="quickcmd">copy</button>
+      </div>
+      <p>When it finishes, confirm it's alive:</p>
+      <div class="code-wrap">
+        <pre><code>sudo zenvps status</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+    </section>
+
+    <!-- MANUAL -->
+    <section id="manual" class="anchor-offset">
+      <div class="section-eyebrow">05 · Installation</div>
+      <h2>Manual install</h2>
+      <p class="lead">Prefer to inspect the archive first, or already have the ZIP downloaded? Do it step by step.</p>
+      <div class="code-wrap">
+<pre><code><span class="tok-cmt"># 1. Extract just the installer</span>
+unzip ZenVPS-Installer-v1.0.0.zip
+
+<span class="tok-cmt"># 2. Run it</span>
+sudo bash ZenVPS-Installer/install.sh install
+
+<span class="tok-cmt"># 3. Check it's running</span>
+sudo zenvps status</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+      <p>During install, the wizard asks for six things — two required, four optional:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Prompt</th><th>Required?</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Discord bot token</td><td><span class="chip chip-owner">required</span></td><td>Never written to source — goes straight to <code>/etc/zenvps/env</code></td></tr>
+            <tr><td>Your Discord user ID</td><td><span class="chip chip-owner">required</span></td><td>Becomes the bot owner</td></tr>
+            <tr><td>Discord server (guild) ID</td><td><span class="chip chip-admin">recommended</span></td><td>Enables instant slash-command sync</td></tr>
+            <tr><td>Discord server invite link</td><td>optional</td><td>Shown in <code>/about</code> and <code>/help</code></td></tr>
+            <tr><td>Brand name</td><td>optional</td><td>Default: <code>ZenVPS</code></td></tr>
+            <tr><td>Max VPS per user</td><td>optional</td><td>Default: <code>2</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SOURCE -->
+    <section id="source" class="anchor-offset">
+      <div class="section-eyebrow">06 · Installation</div>
+      <h2>Where the bot source comes from</h2>
+      <p class="lead">By default the installer clones <code>https://github.com/ZentrixDev/ZenVPS-Files.git</code>. Three ways to override that:</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num"></div>
+          <div>
+            <h4>Environment variable</h4>
+            <p>For non-interactive installs, point it at a fork before running:</p>
+            <div class="code-wrap"><pre><code>sudo ZENVPS_REPO_URL=https://github.com/your-fork/ZenVPS-Files.git bash install.sh install</code></pre><button class="copy-btn">copy</button></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div>
+            <h4>Interactive prompt</h4>
+            <p>Running <code>install.sh install</code> in a terminal asks you to choose between git-clone and local-copy.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div>
+            <h4>Local copy (offline installs)</h4>
+            <p>Extract <code>ZenVPS-Files-v1.0.0.zip</code> next to the installer — or set <code>ZENVPS_SRC=/path/to/python</code> — then choose "Use a local copy" when prompted.</p>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:18px;">Later, <code>install.sh update</code> runs <code>git pull</code> on the same repo to fetch the latest version automatically.</p>
+    </section>
+
+    <!-- STEPS -->
+    <section id="steps" class="anchor-offset">
+      <div class="section-eyebrow">07 · Installation</div>
+      <h2>What the installer actually does</h2>
+      <p class="lead">Nine steps, cleared between each for a readable flow. If any step fails, an <code>ERR</code> trap rolls back everything created so far, in reverse order.</p>
+      <ol class="steps">
+        <li class="step"><div class="step-num"></div><div><h4>Pre-flight checks</h4><p>Verifies root, detects the OS, exits immediately if it isn't Ubuntu LTS or Debian stable.</p></div></li>
+        <li class="step"><div class="step-num"></div><div><h4>Install system dependencies</h4><p><code>apt-get install</code> of ca-certificates, curl, wget, git, jq, sqlite3, python3, docker, and friends.</p></div></li>
+        <li class="step"><div class="step-num"></div><div><h4>Create service user + directories</h4><p><code>useradd --system zenvps</code>, plus <code>/opt/zenvps</code>, <code>/etc/zenvps</code>, <code>/var/lib/zenvps</code>, <code>/var/log/zenvps</code>, <code>/var/lib/zenvps/backups</code>.</p></div></li>
+        <li class="step"><div class="step-num"></div><div><h4>Acquire source code</h4><p>Clones (or copies) the bot source into <code>/opt/zenvps/</code>.</p></div></li>
+        <li class="step"><div class="step-num"></div><div><h4>Install the Python runtime</h4><p>Creates a venv at <code>/opt/zenvps/.venv</code> and installs <code>requirements.txt</code>.</p></div></li>
+        <li class="step"><div class="step-num"></div><div><h4>Build VPS Docker images</h4><p>Builds <code>zenvps/ubuntu:22.04</code> and <code>zenvps/debian:12</code> from the hardened Dockerfiles.</p></div></li>
+        <li class="step"><div class="step-num"></div><div><h4>Set up configuration</h4><p>Writes <code>/etc/zenvps/env</code> (mode <code>0600</code>, root-owned) from <code>.env.example</code>, then runs the setup wizard.</p></div></li>
+        <li class="step"><div class="step-num"></div><div><h4>Install systemd service</h4><p><code>zenvps.service</code>, the watchdog service/timer, the anti-abuse service, logrotate config, and the CLI tool.</p></div></li>
+        <li class="step"><div class="step-num"></div><div><h4>Run health checks &amp; start</h4><p>Verifies Docker, network, and config file — then <code>systemctl start zenvps</code>.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- COMMANDS -->
+    <section id="commands" class="anchor-offset">
+      <div class="section-eyebrow">08 · Operating it</div>
+      <h2>Installer commands</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>install</code></td><td>Fresh install with the interactive setup wizard</td></tr>
+            <tr><td><code>install --yes</code></td><td>Same, but skips confirmation prompts (CI-friendly)</td></tr>
+            <tr><td><code>update</code></td><td>Re-copy source, reinstall deps, rebuild Docker images, restart</td></tr>
+            <tr><td><code>uninstall</code></td><td>Stop service, remove files — preserves data, backups, and config</td></tr>
+            <tr><td><code>repair</code></td><td>Reinstall deps and re-sync service files, keeping your data</td></tr>
+            <tr><td><code>status</code></td><td>Show service status, version, and config sanity</td></tr>
+            <tr><td><code>wizard</code></td><td>Re-run the interactive setup wizard</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-wrap">
+<pre><code>sudo bash install.sh install
+sudo bash install.sh install --yes      <span class="tok-cmt"># no prompts (CI)</span>
+sudo bash install.sh update
+sudo bash install.sh repair
+sudo bash install.sh uninstall
+sudo bash install.sh status
+sudo bash install.sh wizard</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+    </section>
+
+    <!-- CLI -->
+    <section id="cli" class="anchor-offset">
+      <div class="section-eyebrow">09 · Operating it</div>
+      <h2>The <code>zenvps</code> CLI tool</h2>
+      <p class="lead">Once installed, <code>/usr/local/bin/zenvps</code> is your day-to-day wrapper around the service.</p>
+      <div class="code-wrap">
+<pre><code>zenvps start           <span class="tok-cmt"># start the service</span>
+zenvps stop            <span class="tok-cmt"># stop the service</span>
+zenvps restart         <span class="tok-cmt"># restart the service</span>
+zenvps status          <span class="tok-cmt"># show service status</span>
+zenvps logs -f         <span class="tok-cmt"># follow logs (journalctl -f)</span>
+zenvps logs 100        <span class="tok-cmt"># last 100 log lines</span>
+zenvps health          <span class="tok-cmt"># run health checks</span>
+zenvps backup          <span class="tok-cmt"># create a database backup</span>
+zenvps list-backups    <span class="tok-cmt"># show available backups</span>
+zenvps restore &lt;file&gt;  <span class="tok-cmt"># restore from a backup file</span>
+zenvps wizard          <span class="tok-cmt"># re-run setup wizard</span>
+zenvps update           <span class="tok-cmt"># update to the latest version</span>
+zenvps uninstall        <span class="tok-cmt"># uninstall (preserves data + backups)</span>
+zenvps shell            <span class="tok-cmt"># drop into a shell as the zenvps user</span>
+zenvps version          <span class="tok-cmt"># show installed version</span></code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+    </section>
+
+    <!-- FILE LOCATIONS -->
+    <section id="files" class="anchor-offset">
+      <div class="section-eyebrow">10 · Operating it</div>
+      <h2>File locations after install</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Path</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>/opt/zenvps/</code></td><td>Source code + venv</td></tr>
+            <tr><td><code>/etc/zenvps/env</code></td><td>Configuration (mode 0600, root-owned)</td></tr>
+            <tr><td><code>/var/lib/zenvps/zenvps.json</code></td><td>JSON database</td></tr>
+            <tr><td><code>/var/lib/zenvps/backups/</code></td><td>Gzipped JSON snapshots</td></tr>
+            <tr><td><code>/var/lib/zenvps/keys/</code></td><td>Per-VPS SSH keypairs (host-SSH backend)</td></tr>
+            <tr><td><code>/var/log/zenvps/</code></td><td>Log files — daily rotation, 14-day retention</td></tr>
+            <tr><td><code>/etc/systemd/system/zenvps*.service</code></td><td>systemd units</td></tr>
+            <tr><td><code>/etc/logrotate.d/zenvps</code></td><td>Log rotation config</td></tr>
+            <tr><td><code>/usr/local/bin/zenvps</code></td><td>CLI tool</td></tr>
+            <tr><td><code>/var/lib/zenvps/anti-abuse.sh</code></td><td>Host-level miner killer</td></tr>
+            <tr><td><code>/var/lib/zenvps/egress-filter.sh</code></td><td>Network egress filter (opt-in)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CONFIG -->
+    <section id="config" class="anchor-offset">
+      <div class="section-eyebrow">11 · Operating it</div>
+      <h2>Configuration</h2>
+      <p class="lead">All configuration lives in environment variables — a fully-commented template ships as <code>python/.env.example</code>.</p>
+
+      <h3>Minimum required</h3>
+      <div class="code-wrap">
+<pre><code>DISCORD_TOKEN=&lt;your bot token from discord.com/developers/applications&gt;
+OWNER_IDS=&lt;your Discord user ID&gt;</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+
+      <h3>Recommended</h3>
+      <div class="code-wrap">
+<pre><code>ADMIN_IDS=&lt;comma-separated admin user IDs&gt;
+ADMIN_ROLE_IDS=&lt;comma-separated admin role IDs&gt;
+GUILD_ID=&lt;your test server ID for instant slash-command sync&gt;
+SUPPORT_DISCORD_INVITE=&lt;your Discord server invite link&gt;</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+
+      <h3>Common overrides</h3>
+      <div class="code-wrap">
+<pre><code>BRAND_NAME=MyCoolVPS
+MAX_VPS_PER_USER=3
+DEFAULT_MEMORY_MB=2048
+ENABLE_HOST_SSH=true
+LOG_LEVEL=DEBUG</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+      <p>For development straight from a git checkout, no installer needed:</p>
+      <div class="code-wrap">
+<pre><code>cd python
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+cp .env.example .env
+<span class="tok-cmt"># edit .env — fill in DISCORD_TOKEN + OWNER_IDS</span>
+
+PYTHONPATH=src .venv/bin/python -m zenvps</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="architecture" class="anchor-offset">
+      <div class="section-eyebrow">12 · Using the bot</div>
+      <h2>Architecture</h2>
+      <p class="lead">Slash commands flow through a permission checker into cogs, which read and write a locked JSON database and drive Docker through async subprocess calls.</p>
+      <div class="diagram">Discord WebSocket
+   │  slash commands
+   ▼
+<span class="node">ZenVPS Bot</span>
+   ├─ Permission Checker <span class="flow">(RBAC)</span>
+   └─ Cogs → user_cmds · admin_cmds · remote_cmds · meta_cmds
+        │
+        ├──▶ <span class="node">Database</span>  (zenvps.json · fcntl lock · atomic tmp+rename)
+        │
+        └──▶ <span class="node">DockerManager</span>  (docker CLI via async subprocess)
+                   │
+                   ▼
+             Docker daemon (/var/run/docker.sock)
+                   │
+                   ▼
+             VPS containers (Ubuntu / Debian)</div>
+    </section>
+
+    <!-- SLASH COMMANDS -->
+    <section id="commands-ref" class="anchor-offset">
+      <div class="section-eyebrow">13 · Using the bot</div>
+      <h2>Slash command reference</h2>
+
+      <h3>User commands <span class="chip chip-user">everyone</span></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>/deploy [os_image] [memory_mb] [cpu_cores] [disk_mb]</code></td><td>Create a new VPS</td></tr>
+            <tr><td><code>/list</code></td><td>List your VPS instances</td></tr>
+            <tr><td><code>/vps info &lt;vps_id&gt;</code></td><td>Show VPS details</td></tr>
+            <tr><td><code>/vps start &lt;vps_id&gt;</code></td><td>Start a stopped VPS</td></tr>
+            <tr><td><code>/vps stop &lt;vps_id&gt;</code></td><td>Stop a running VPS</td></tr>
+            <tr><td><code>/vps restart &lt;vps_id&gt;</code></td><td>Restart a VPS</td></tr>
+            <tr><td><code>/vps delete &lt;vps_id&gt;</code></td><td>Permanently delete a VPS</td></tr>
+            <tr><td><code>/vps regen-ssh &lt;vps_id&gt;</code></td><td>Regenerate SSH session</td></tr>
+            <tr><td><code>/vps stats &lt;vps_id&gt;</code></td><td>Live CPU / RAM</td></tr>
+            <tr><td><code>/vps shell &lt;vps_id&gt;</code></td><td>Show all shell options</td></tr>
+            <tr><td><code>/vps transfer &lt;vps_id&gt;</code></td><td>Transfer ownership (modal)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Remote-access commands <span class="chip chip-user">everyone</span></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>/ssh tmate &lt;vps_id&gt;</code></td><td>Provision or show a tmate session</td></tr>
+            <tr><td><code>/ssh sshx &lt;vps_id&gt;</code></td><td>Provision or show an sshx.io session</td></tr>
+            <tr><td><code>/ssh serveo-http &lt;vps_id&gt; &lt;port&gt;</code></td><td>Forward HTTP via serveo.net</td></tr>
+            <tr><td><code>/ssh serveo-tcp &lt;vps_id&gt; &lt;port&gt;</code></td><td>Forward a TCP port via serveo.net</td></tr>
+            <tr><td><code>/ssh host &lt;vps_id&gt;</code></td><td>Provision or show host SSH</td></tr>
+            <tr><td><code>/ssh revoke &lt;vps_id&gt;</code></td><td>Revoke all remote sessions for a VPS</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Admin commands <span class="chip chip-admin">admin</span> <span class="chip chip-owner">owner</span></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>/admin stats</code></td><td>Node-wide system statistics</td></tr>
+            <tr><td><code>/admin vps-list</code></td><td>List all VPS (paginated)</td></tr>
+            <tr><td><code>/admin suspend &lt;vps_id&gt;</code></td><td>Suspend a VPS</td></tr>
+            <tr><td><code>/admin unsuspend &lt;vps_id&gt;</code></td><td>Unsuspend a VPS</td></tr>
+            <tr><td><code>/admin delete &lt;vps_id&gt;</code></td><td>Force-delete any VPS</td></tr>
+            <tr><td><code>/admin edit &lt;vps_id&gt; [memory_mb] [cpu_cores]</code></td><td>Edit VPS resource limits</td></tr>
+            <tr><td><code>/admin ban &lt;user&gt;</code></td><td>Ban a user (modal for reason)</td></tr>
+            <tr><td><code>/admin unban &lt;user&gt;</code></td><td>Unban a user</td></tr>
+            <tr><td><code>/admin list-banned</code></td><td>List banned users</td></tr>
+            <tr><td><code>/admin backup</code></td><td>Create a database backup</td></tr>
+            <tr><td><code>/admin list-backups</code></td><td>List available backups</td></tr>
+            <tr><td><code>/admin add-admin &lt;user&gt;</code></td><td><span class="chip chip-owner">owner only</span> Add an admin</td></tr>
+            <tr><td><code>/admin remove-admin &lt;user&gt;</code></td><td><span class="chip chip-owner">owner only</span> Remove an admin</td></tr>
+            <tr><td><code>/admin list-admins</code></td><td>List all admins + owners</td></tr>
+            <tr><td><code>/admin reset</code></td><td><span class="chip chip-owner">owner only</span> ⚠️ Deletes ALL VPS and resets the DB — double-confirm required</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Meta commands <span class="chip chip-user">everyone</span></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>/ping</code></td><td>Bot latency (color-coded)</td></tr>
+            <tr><td><code>/help</code></td><td>Available commands, role-aware</td></tr>
+            <tr><td><code>/health</code></td><td>Discord, Docker, disk, memory, load, VPS count</td></tr>
+            <tr><td><code>/version</code></td><td>Bot, Python, discord.py versions</td></tr>
+            <tr><td><code>/about</code></td><td>About this bot, author, support invite</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DATABASE -->
+    <section id="database" class="anchor-offset">
+      <div class="section-eyebrow">14 · Using the bot</div>
+      <h2>Database schema</h2>
+      <p class="lead">A single JSON document. Writes are atomic (<code>tmp</code> + <code>os.replace</code>) and protected by <code>fcntl.flock</code>.</p>
+      <div class="code-wrap">
+<pre><code>{
+  "schema_version": 1,
+  "vps": {
+    "ABC12345": {
+      "vps_id": "ABC12345",
+      "owner_id": "100000000000000001",
+      "container_name": "vps-abc12345",
+      "os_image": "ubuntu:22.04",
+      "memory_mb": 1024,
+      "cpu_cores": 1.0,
+      "disk_mb": 10240,
+      "status": "running",
+      "created_at": "2026-07-13T10:00:00Z",
+      "restart_count": 0,
+      "miner_strikes": 0
+    }
+  },
+  "users": { "100000000000000001": { "banned": false, "vps_count_lifetime": 1 } },
+  "admins": ["100000000000000002"],
+  "settings": {},
+  "stats": { "total_vps_created": 1, "total_restarts": 0 }
+}</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+    </section>
+
+    <!-- SECURITY -->
+    <section id="security" class="anchor-offset">
+      <div class="section-eyebrow">15 · Security</div>
+      <h2>Security model</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h4>⛔ No <code>--privileged</code></h4>
+          <p>Every VPS container runs with <code>--cap-drop=ALL</code> plus a curated <code>--cap-add</code> allowlist.</p>
+        </div>
+        <div class="card">
+          <h4>⛔ No <code>shell=True</code></h4>
+          <p>All subprocess calls use <code>create_subprocess_exec</code> with argument lists, never a shell string.</p>
+        </div>
+        <div class="card">
+          <h4>⛔ No pickle</h4>
+          <p>Backups are gzipped JSON, restored via <code>json.loads()</code> — never deserialized code.</p>
+        </div>
+        <div class="card">
+          <h4>🔑 No hardcoded credentials</h4>
+          <p>Tokens and IDs are read from environment variables only.</p>
+        </div>
+        <div class="card">
+          <h4>🧹 Secret scrubbing</h4>
+          <p>The logger auto-redacts Discord tokens, passwords, and SSH keys before they hit disk.</p>
+        </div>
+        <div class="card">
+          <h4>✅ Input validation</h4>
+          <p>Every value crossing a trust boundary passes through <code>security.py</code>.</p>
+        </div>
+        <div class="card">
+          <h4>🎚️ Permission checks</h4>
+          <p>Bit-flag RBAC — <code>PermissionChecker.can(user, Permission.CREATE_VPS)</code>.</p>
+        </div>
+        <div class="card">
+          <h4>🐳 Container hardening</h4>
+          <p><code>--memory</code>, <code>--cpus</code>, <code>--pids-limit=512</code>, <code>--security-opt=no-new-privileges</code>.</p>
+        </div>
+      </div>
+
+      <div class="callout danger">
+        <span class="callout-icon">⚠</span>
+        <p><strong>If you previously used any of the original VPS-bot projects, revoke their Discord tokens immediately</strong> at the Discord Developer Portal — they were committed in plaintext in those projects. ZenVPS never writes tokens to source code; they go straight to <code>/etc/zenvps/env</code> (mode <code>0600</code>).</p>
+      </div>
+    </section>
+
+    <!-- ANTI-ABUSE -->
+    <section id="antiabuse" class="anchor-offset">
+      <div class="section-eyebrow">16 · Security</div>
+      <h2>Anti-abuse — four layers</h2>
+      <ol class="layers">
+        <li class="layer"><div class="layer-n">01</div><div><h4>Container-level process scan</h4><p>Every 5 minutes, <code>ps aux</code> runs inside each VPS and is matched against a curated miner regex with word boundaries. Three strikes → suspend.</p></div></li>
+        <li class="layer"><div class="layer-n">02</div><div><h4>cgroup CPU throttle</h4><p>Every container gets a <code>--cpus</code> ceiling from <code>CPU_THROTTLE_PERCENT</code>.</p></div></li>
+        <li class="layer"><div class="layer-n">03</div><div><h4>Host-level <code>anti-abuse.sh</code></h4><p>A separate systemd service scans host processes with <code>pgrep</code>, independent of any single container.</p></div></li>
+        <li class="layer"><div class="layer-n">04</div><div><h4>Network egress filter</h4><p>Optional nftables/iptables rules blocking 50+ known mining-pool domains.</p></div></li>
+      </ol>
+      <p style="margin-top:18px;">Killing a legitimate process? Edit <code>/var/lib/zenvps/anti-abuse.sh</code> and add it to the <code>WHITELIST_RE</code> regex, then restart the service — see <a href="#troubleshooting">Troubleshooting</a>.</p>
+    </section>
+
+    <!-- TROUBLESHOOTING -->
+    <section id="troubleshooting" class="anchor-offset">
+      <div class="section-eyebrow">17 · Help</div>
+      <h2>Troubleshooting</h2>
+
+      <div class="acc-item">
+        <button class="acc-trigger" aria-expanded="false">"git clone failed" <span class="chevron">▸</span></button>
+        <div class="acc-panel"><div class="acc-panel-inner">
+          <p>The installer couldn't clone the bot source. Possible causes:</p>
+          <ul>
+            <li>The default repo URL doesn't exist yet — the ZenVPS-Files source needs to be pushed there first</li>
+            <li>No network access to github.com — check firewall / DNS</li>
+            <li>You're using a private fork — set <code>ZENVPS_REPO_URL</code> with embedded credentials, or configure git SSH keys</li>
+          </ul>
+          <p><strong>Offline fallback:</strong> extract <code>ZenVPS-Files-v1.0.0.zip</code> next to the installer, re-run, and choose "Use a local copy." Or set <code>ZENVPS_SRC=/path/to/python</code> explicitly.</p>
+        </div></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger" aria-expanded="false">"Unsupported OS" <span class="chevron">▸</span></button>
+        <div class="acc-panel"><div class="acc-panel-inner">
+          <p>The installer only supports Ubuntu 20.04 / 22.04 / 24.04 and Debian 11 / 12. Anything else exits at the pre-flight check.</p>
+        </div></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger" aria-expanded="false">Docker not installed <span class="chevron">▸</span></button>
+        <div class="acc-panel"><div class="acc-panel-inner">
+          <p>The installer installs Docker via <code>get.docker.com</code>. If your network blocks that, install it manually first:</p>
+          <div class="code-wrap"><pre><code>sudo apt-get install -y docker.io
+sudo systemctl enable --now docker</code></pre><button class="copy-btn">copy</button></div>
+          <p>Then re-run the installer.</p>
+        </div></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger" aria-expanded="false">Service won't start <span class="chevron">▸</span></button>
+        <div class="acc-panel"><div class="acc-panel-inner">
+          <div class="code-wrap"><pre><code>sudo journalctl -u zenvps -n 50 --no-pager</code></pre><button class="copy-btn">copy</button></div>
+          <p>Common causes:</p>
+          <ul>
+            <li><code>DISCORD_TOKEN</code> is empty → <code>sudo zenvps wizard</code></li>
+            <li><code>OWNER_IDS</code> is empty → same</li>
+            <li>Docker daemon not running → <code>sudo systemctl start docker</code></li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-trigger" aria-expanded="false">Anti-abuse is killing legit processes <span class="chevron">▸</span></button>
+        <div class="acc-panel"><div class="acc-panel-inner">
+          <p>Edit <code>/var/lib/zenvps/anti-abuse.sh</code> and add your process name to the <code>WHITELIST_RE</code> regex, then restart:</p>
+          <div class="code-wrap"><pre><code>sudo systemctl restart zenvps-anti-abuse.service</code></pre><button class="copy-btn">copy</button></div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- UNINSTALL -->
+    <section id="uninstall" class="anchor-offset">
+      <div class="section-eyebrow">18 · Help</div>
+      <h2>Uninstall</h2>
+      <div class="code-wrap">
+<pre><code>sudo bash install.sh uninstall</code></pre>
+        <button class="copy-btn">copy</button>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h4>🗑 Removed</h4>
+          <ul>
+            <li><code>/opt/zenvps/</code></li>
+            <li>All systemd units</li>
+            <li><code>/etc/logrotate.d/zenvps</code></li>
+            <li><code>/usr/local/bin/zenvps</code></li>
+            <li><code>zenvps/ubuntu:*</code> and <code>zenvps/debian:*</code> images</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>🛡 Preserved</h4>
+          <ul>
+            <li><code>/var/lib/zenvps/</code> — database, keys, backups</li>
+            <li><code>/etc/zenvps/</code> — config</li>
+            <li><code>/var/log/zenvps/</code> — logs</li>
+            <li>The <code>zenvps</code> system user</li>
+          </ul>
+        </div>
+      </div>
+      <p>Remove those manually if you want a completely clean host.</p>
+    </section>
+
+    <!-- CREDITS -->
+    <section id="credits" class="anchor-offset">
+      <div class="section-eyebrow">19 · Wrap-up</div>
+      <h2>Credits &amp; license</h2>
+      <p class="lead">ZenVPS is a clean-room rewrite of several prior Discord VPS-bot projects, addressing critical security issues — leaked tokens, <code>--privileged</code> containers, hardcoded <code>root:root</code> SSH passwords, pickle-based backups, and <code>shell=True</code> subprocess calls — along with 65 catalogued code-quality bugs. No code from the original projects is reused; every file here is original work.</p>
+      <p>Licensed under <strong>MIT</strong>. See <code>LICENSE</code> in either package.</p>
+      <div class="callout info">
+        <span class="callout-icon">★</span>
+        <p>If this project is useful to you, consider starring the repository. Bug reports and pull requests are welcome.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="brand">
+    <div class="brand-mark">Z</div>
+    <div class="brand-name">ZenVPS</div>
+  </div>
+  <p>Made by <a href="https://github.com/ZentrixDev" target="_blank" rel="noopener">ZentrixDev</a>. This page documents the ZenVPS-Installer and ZenVPS-Files packages — MIT licensed.</p>
+  <div class="credit-links">
+    <a href="https://github.com/ZentrixDev" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>
+    <a href="#overview">Back to top ↑</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---- copy buttons ----
+  document.querySelectorAll('.copy-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var wrap = btn.closest('.code-wrap');
+      var codeEl = wrap.querySelector('pre');
+      var text = codeEl.innerText;
+      navigator.clipboard.writeText(text).then(function(){
+        var original = btn.textContent;
+        btn.textContent = 'copied ✓';
+        btn.classList.add('copied');
+        setTimeout(function(){ btn.textContent = original; btn.classList.remove('copied'); }, 1600);
+      });
+    });
+  });
+
+  // ---- accordion ----
+  document.querySelectorAll('.acc-trigger').forEach(function(trigger){
+    trigger.addEventListener('click', function(){
+      var item = trigger.closest('.acc-item');
+      var panel = item.querySelector('.acc-panel');
+      var isOpen = item.classList.contains('open');
+      if(isOpen){
+        panel.style.maxHeight = null;
+        item.classList.remove('open');
+        trigger.setAttribute('aria-expanded','false');
+      } else {
+        item.classList.add('open');
+        trigger.setAttribute('aria-expanded','true');
+        panel.style.maxHeight = panel.scrollHeight + 'px';
+      }
+    });
+  });
+
+  // ---- nav search filter ----
+  var searchInput = document.getElementById('navSearch');
+  searchInput.addEventListener('input', function(){
+    var q = searchInput.value.trim().toLowerCase();
+    document.querySelectorAll('.navgroup').forEach(function(group){
+      var anyVisible = false;
+      group.querySelectorAll('.navlink').forEach(function(link){
+        var match = link.textContent.toLowerCase().indexOf(q) !== -1;
+        link.style.display = match ? '' : 'none';
+        if(match) anyVisible = true;
+      });
+      group.style.display = (q === '' || anyVisible) ? '' : 'none';
+    });
+  });
+
+  // ---- scrollspy ----
+  var links = Array.prototype.slice.call(document.querySelectorAll('.navlink'));
+  var sections = links.map(function(l){ return document.querySelector(l.getAttribute('href')); }).filter(Boolean);
+
+  function onScroll(){
+    var pos = window.scrollY + 120;
+    var current = sections[0];
+    sections.forEach(function(sec){
+      if(sec.offsetTop <= pos) current = sec;
+    });
+    links.forEach(function(l){ l.classList.remove('active'); });
+    if(current){
+      var activeLink = document.querySelector('.navlink[href="#' + current.id + '"]');
+      if(activeLink) activeLink.classList.add('active');
+    }
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+
+</body>
+</html>
